@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "project_name"
+name = "client_analiser"
 version = "0.1.0"
 description = ""
-authors = ["Łukasz Neumann <lukasz.neumann@pw.edu.pl>"]
+authors = ["Jakub Robaczewski <kubarob13@gmail.com>, Michał Matak"]
 
 [tool.poetry.dependencies]
 python = "^3.8"

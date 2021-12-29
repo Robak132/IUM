@@ -1,9 +1,6 @@
 import random
-from random import randint
-
 import uvicorn
 from fastapi import FastAPI, Response, Request
-from starlette import status
 
 from client_analiser.models.predict_model import predict_a, predict_b
 
