@@ -1,10 +1,12 @@
 import random
 import uvicorn
 from fastapi import FastAPI, Response, Request
+from starlette.templating import Jinja2Templates
 
 from client_analiser.models.predict_model import predict_a, predict_b
 
 app = FastAPI()
+template = Jinja2Templates(directory="templates/")
 
 
 @app.get("/")
@@ -22,6 +24,11 @@ async def root(request: Request, response: Response):
 async def root(request: Request, response: Response):
     input_data = await request.json()
     return {"Result": predict_b(input_data)}
+
+
+@app.get('/form')
+def form_post(request: Request, response: Response):
+    return template.TemplateResponse('index.html', {"request": request, "response": response})
 
 
 @app.post("/predict")
