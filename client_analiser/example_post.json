@@ -1,0 +1,63 @@
+{
+	"products": [
+		{
+			"product_id": 1001,
+			"product_name": "Telefon Siemens Gigaset DA310",
+			"category_path": "Telefony i akcesoria;Telefony stacjonarne",
+			"price": 58.97
+		},
+		{
+			"product_id": 1002,
+			"product_name": "Kyocera FS-1135MFP",
+			"category_path": "Komputery;Drukarki i skanery;Biurowe urz\u0105dzenia wielofunkcyjne",
+			"price": 2048.5
+		}
+	],
+	"deliveries": [
+		{
+			"purchase_id": 20001,
+			"purchase_timestamp": "2021-05-19T07:02:36",
+			"delivery_timestamp": "2021-05-21T07:04:43",
+			"delivery_company": 360
+		},
+		{
+			"purchase_id": 20002,
+			"purchase_timestamp": "2021-02-27T20:13:02",
+			"delivery_timestamp": "2021-03-02T20:15:54",
+			"delivery_company": 516
+		}
+	],
+	"sessions": [
+		{
+			"session_id": 124,
+			"timestamp": "2021-05-19T06:57:15",
+			"user_id": 102,
+			"product_id": 1277,
+			"event_type": "VIEW_PRODUCT",
+			"offered_discount": 5,
+			"purchase_id": null
+		},
+		{
+			"session_id": 124,
+			"timestamp": "2021-05-19T06:59:15",
+			"user_id": 102,
+			"product_id": 1276,
+			"event_type": "VIEW_PRODUCT",
+			"offered_discount": 5,
+			"purchase_id": null
+		}
+	],
+	"users": [
+		{
+			"user_id": 102,
+			"name": "Arkadiusz Hejna",
+			"city": "Wroc\u0142aw",
+			"street": "ul. Jana 32"
+		},
+		{
+			"user_id": 103,
+			"name": "Oskar Skotarczak",
+			"city": "Warszawa",
+			"street": "pl. Wrzosowa 595"}
+	]
+}

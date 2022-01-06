@@ -1,12 +1,19 @@
-import random
+from time import strftime
+
 import uvicorn
+from random import choice
 from fastapi import FastAPI, Response, Request
-from starlette.templating import Jinja2Templates
 
 from client_analiser.models.predict_model import predict_a, predict_b
 
 app = FastAPI()
-template = Jinja2Templates(directory="templates/")
+log_filename = ""
+
+
+@app.on_event("startup")
+async def startup_event():
+    global log_filename
+    log_filename = strftime("log_%Y%m%d%H%M%S.tsv")
 
 
 @app.get("/")
@@ -14,33 +21,47 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.post("/predictA")
-async def root(request: Request, response: Response):
+@app.post("/predict/A")
+async def get_prediction_a(request: Request, response: Response):
     input_data = await request.json()
-    return {"Result": predict_a(input_data)}
+    result = get_result(input_data, predict_a)
+
+    return result
 
 
-@app.post("/predictB")
-async def root(request: Request, response: Response):
+@app.post("/predict/B")
+async def get_prediction_b(request: Request, response: Response):
     input_data = await request.json()
-    return {"Result": predict_b(input_data)}
+    result = get_result(input_data, predict_b)
 
-
-@app.get('/form')
-def form_post(request: Request, response: Response):
-    return template.TemplateResponse('index.html', {"request": request, "response": response})
+    return result
 
 
 @app.post("/predict")
-async def root(request: Request, response: Response):
+async def get_prediction_ab(request: Request, response: Response):
+    global log_filename
     input_data = await request.json()
+    model = predict_a if choice([True, False]) else predict_b
+    result = get_result(input_data, model)
 
-    if random.choice([True, False]):
-        model = predict_a
-    else:
-        model = predict_b
+    with open(f"logs/{log_filename}", "a+", encoding="utf-8") as file:
+        file.write(f"{input_data}\t{model.__name__}\t{result}\n")
 
-    return {"Result": model(input_data)}
+    return result
+
+
+def get_result(input_data, model):
+    result = model(*split_input_data(input_data))
+    print(f"Using model {model.__name__}")
+    return result
+
+
+def split_input_data(input_data):
+    products = input_data['products']
+    deliveries = input_data['deliveries']
+    sessions = input_data['sessions']
+    users = input_data['users']
+    return products, deliveries, sessions, users
 
 
 if __name__ == "__main__":

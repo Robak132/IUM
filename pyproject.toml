@@ -2,7 +2,7 @@
 name = "client_analiser"
 version = "0.1.0"
 description = ""
-authors = ["Jakub Robaczewski <kubarob13@gmail.com>, Michał Matak"]
+authors = ["Jakub Robaczewski <kubarob13@gmail.com>, Michał Matak <michal.matak.stud@pw.edu.pl>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
