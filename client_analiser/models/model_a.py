@@ -47,6 +47,9 @@ def predict_expenses_for_all_users(sessions_data, products_data):
 
 
 def predict(products: DataFrame, deliveries: DataFrame, sessions: DataFrame, users: DataFrame):
+    if sessions.empty:
+        return {}
+
     sessions["timestamp"] = pd.to_datetime(sessions["timestamp"])
     sessions['timestamp_interval'] = sessions['timestamp'].apply(lambda x: x.month)
     predictions = predict_expenses_for_all_users(sessions, products)
