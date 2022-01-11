@@ -43,6 +43,9 @@ async def get_prediction_b(request: Request):
 @app.get("/predict", response_class=PrettyJSONResponse)
 async def make_report():
     log_data = pd.read_csv("logs/log.csv", header=0, sep=";")
+    if log_data.empty:
+        return "AB test was not initiated"
+
     log_data['good'] = log_data.apply(lambda row: ab_get_valid_result(row["user_id"]), axis=1)
     log_data['error'] = (log_data['result'] - log_data['good'])**2
     log_json = json.loads(log_data.to_json(orient='records'))
