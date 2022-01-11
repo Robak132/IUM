@@ -62,7 +62,7 @@ def extract_users_data(sessions_data, users_data, products_data):
         extracted_users.append(
             get_user_information(enriched_sessions_data[enriched_sessions_data['user_id'] == user_id]))
     enriched_users_data = pd.concat(extracted_users)
-    return pd.merge(enriched_users_data, users_data, on="user_id").drop(columns=['name', 'street', 'user_id'])
+    return pd.merge(enriched_users_data, users_data, on="user_id").drop(columns=['name', 'street'])
 
 
 def find_returned_users(extracted_sessions_data):

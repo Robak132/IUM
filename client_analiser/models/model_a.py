@@ -46,12 +46,12 @@ def predict_expenses_for_all_users(sessions_data, products_data):
     return pd.DataFrame(data=user_future_expenses).set_index('user_id')
 
 
-def predict(products: DataFrame, deliveries: DataFrame, sessions: DataFrame, users: DataFrame):
+def predict(products: DataFrame, deliveries: DataFrame, sessions: DataFrame, user: DataFrame):
     if sessions.empty:
-        return {}
+        return 0
 
     sessions["timestamp"] = pd.to_datetime(sessions["timestamp"])
     sessions['timestamp_interval'] = sessions['timestamp'].apply(lambda x: x.month)
     predictions = predict_expenses_for_all_users(sessions, products)
 
-    return predictions.to_dict()["user_expenses"]
+    return predictions.to_dict()["user_expenses"][user['user_id'].item()]

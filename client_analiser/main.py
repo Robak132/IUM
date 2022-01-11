@@ -1,24 +1,24 @@
+import json
 import random
-import smtpd
-from time import strftime
+import time
 
-import numpy as np
 import pandas as pd
 import uvicorn
-from random import choice
-from fastapi import FastAPI, Response, Request
+import os.path
+from fastapi import FastAPI, Request
 from pandas import DataFrame
-import client_analiser.models.model_a as model_a
-import client_analiser.models.model_b as model_b
+
+from client_analiser.models.model_a import predict as predict_a
+from client_analiser.models.model_b import predict as predict_b
+from client_analiser.utils import PrettyJSONResponse
 
 app = FastAPI()
-log_filename = ""
 
 
 @app.on_event("startup")
 async def startup_event():
-    global log_filename
-    log_filename = strftime("log_%Y%m%d%H%M%S.tsv")
+    if not os.path.exists("logs/log.csv"):
+        await reset_log()
 
 
 @app.get("/")
@@ -27,59 +27,99 @@ async def root():
 
 
 @app.post("/predict/A")
-async def get_prediction_a(request: Request, response: Response):
+async def get_prediction_a(request: Request):
     input_data = await request.json()
-    result = get_result(input_data, ab_ratio=1)
+    result = predict_group(*make_dataframes(input_data), ab_ratio=1)
     return result
 
 
 @app.post("/predict/B")
-async def get_prediction_b(request: Request, response: Response):
+async def get_prediction_b(request: Request):
     input_data = await request.json()
-    result = get_result(input_data, ab_ratio=0)
+    result = predict_group(*make_dataframes(input_data), ab_ratio=0)
     return result
+
+
+@app.get("/predict", response_class=PrettyJSONResponse)
+async def make_report():
+    log_data = pd.read_csv("logs/log.csv", header=0, sep=";")
+    log_data['good'] = log_data.apply(lambda row: ab_get_valid_result(row["user_id"]), axis=1)
+    log_data['error'] = (log_data['result'] - log_data['good'])**2
+    log_json = json.loads(log_data.to_json(orient='records'))
+
+    log_data = log_data.drop(columns=["good", "result", "user_id"])
+    grouped_data = log_data.groupby(by=["model", "timestamp"]).mean()
+    total_grouped_data = log_data.drop(columns="timestamp").groupby(by=["model"]).mean()
+    model_results = {}
+
+    for row, data in grouped_data.iterrows():
+        model, timestamp = row
+        error = data["error"]
+        json_object = {"model": model, "MSE": error}
+        timestamp_results = model_results.get(timestamp, [])
+        timestamp_results.append(json_object)
+        model_results[timestamp] = timestamp_results
+
+    for model, data in total_grouped_data.iterrows():
+        error = data["error"]
+        json_object = {"model": model, "MSE": error}
+        timestamp_results = model_results.get("_total", [])
+        timestamp_results.append(json_object)
+        model_results["_total"] = timestamp_results
+
+    return {"model_results": model_results, "log": log_json}
+
+
+def ab_get_valid_result(unit_id):
+    with open("../data/ab_test/ab_test_good_data.json") as file:
+        json_object = json.load(file)
+        return json_object[str(unit_id)]
 
 
 @app.post("/predict")
-async def get_prediction_ab(request: Request, response: Response):
+async def get_prediction_ab(request: Request):
     input_data = await request.json()
-    result = get_result(input_data)
+    result = predict_group(*make_dataframes(input_data))
     return result
 
 
-def get_result(input_data: dict, ab_ratio: int = 0.5):
-    set_a, set_b = split_input_data(input_data, ab_ratio=ab_ratio)
-    result_a = model_a.predict(*set_a)
-    result_b = model_b.predict(*set_b)
+@app.post("/predict/reset_log")
+async def reset_log():
+    os.remove("logs/log.csv")
+    with open("logs/log.csv", "a+", encoding="utf-8") as file:
+        file.write(f"timestamp;user_id;model;result\n")
 
-    result = result_a.copy()
-    result.update(result_b)
+
+def predict_group(products: DataFrame, deliveries: DataFrame, sessions: DataFrame, users: DataFrame,
+                  ab_ratio: float = 0.5):
+    now = time.strftime('%Y-%m-%dT%H:%M:%S')
+    result_dict = {}
+    for row, user in users.iterrows():
+        if random.random() <= ab_ratio:
+            result = predict_one_user(user['user_id'], (deliveries, products, sessions, users), now, predict_a)
+            result_dict[user["user_id"]] = result
+        else:
+            result = predict_one_user(user['user_id'], (deliveries, products, sessions, users), now, predict_b)
+            result_dict[user["user_id"]] = result
+    return result_dict
+
+
+def predict_one_user(user_id: int, data: tuple[DataFrame, DataFrame, DataFrame, DataFrame], now: str, model):
+    deliveries, products, sessions, users = data
+    _user = users[users['user_id'] == user_id]
+    _sessions = sessions[sessions['user_id'] == user_id]
+    result = model(products, deliveries, _sessions, _user)
+    with open("logs/log.csv", "a+", encoding="utf-8") as file:
+        file.write(f"{now};{user_id};{model.__module__}.{model.__name__};{result}\n")
     return result
 
-# def get_result(input_data, model):
-#     result = model(*split_input_data(input_data))
-#
-#     with open(f"logs/{log_filename}", "a+", encoding="utf-8") as file:
-#         file.write(f"{input_data}\t{model.__name__}\t{result}\n")
-#     return result
 
-
-def split_input_data(input_data: dict, ab_ratio: float = 0.5):
+def make_dataframes(input_data: dict):
     users = DataFrame.from_dict(input_data.get('users', {}))
     sessions = DataFrame.from_dict(input_data.get('sessions', {}))
     products = DataFrame.from_dict(input_data.get('products', {}))
     deliveries = DataFrame.from_dict(input_data.get('deliveries', {}))
-
-    users_a = users.sample(frac=ab_ratio)
-    users_b = users.drop(users_a.index)
-
-    sessions_a = DataFrame() if users_a.empty else sessions.loc[sessions["user_id"].isin(users_a["user_id"].to_list())]
-    sessions_b = DataFrame() if users_b.empty else sessions.loc[sessions["user_id"].isin(users_b["user_id"].to_list())]
-
-    set_a = [products, deliveries, sessions_a, users_a]
-    set_b = [products, deliveries, sessions_b, users_b]
-
-    return set_a, set_b
+    return products, deliveries, sessions, users
 
 
 if __name__ == "__main__":
