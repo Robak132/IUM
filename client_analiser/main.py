@@ -96,28 +96,34 @@ async def reset_log():
         file.write(f"timestamp;user_id;model;result\n")
 
 
-def predict_group(products: DataFrame, deliveries: DataFrame, sessions: DataFrame, users: DataFrame,
+def predict_group(products: DataFrame,
+                  deliveries: DataFrame,
+                  sessions: DataFrame,
+                  users: DataFrame,
                   ab_ratio: float = 0.5):
-    dataset = (deliveries, products, sessions, users)
     now = time.strftime('%Y-%m-%dT%H:%M:%S')
-    result_dict = {}
-    for row, user in users.iterrows():
-        if random.random() <= ab_ratio:
-            result = predict_one_user(user['user_id'], dataset, now, model_A.predict_expenses)
-            result_dict[user["user_id"]] = result
-        else:
-            result = predict_one_user(user['user_id'], dataset, now, model_B.predict_expenses)
-            result_dict[user["user_id"]] = result
-    return result_dict
+
+    users_a = users.sample(frac=ab_ratio)
+    sessions_a = sessions[sessions["user_id"].isin(users_a["user_id"].to_list())]
+
+    users_b = users.drop(users_a.index)
+    sessions_b = sessions[sessions["user_id"].isin(users_b["user_id"].to_list())]
+
+    result = predict_using_model(products, deliveries, sessions_a, users_a, now, model_A)
+    result.update(predict_using_model(products, deliveries, sessions_b, users_b, now, model_B))
+    return result
 
 
-def predict_one_user(user_id: int, data: tuple[DataFrame, DataFrame, DataFrame, DataFrame], now: str, model):
-    deliveries, products, sessions, users = data
-    _user = users[users['user_id'] == user_id]
-    _sessions = sessions[sessions['user_id'] == user_id]
-    result = model(products, deliveries, _sessions, _user)
-    with open("logs/log.csv", "a+", encoding="utf-8") as file:
-        file.write(f"{now};{user_id};{model.__module__}.{model.__name__};{result}\n")
+def predict_using_model(products: DataFrame,
+                        deliveries: DataFrame,
+                        sessions_a: DataFrame,
+                        users_a: DataFrame,
+                        now: str,
+                        model: ModelInterface()) -> dict[str, float]:
+    result = model.predict_expenses(products, deliveries, sessions_a, users_a)
+    for key in result.keys():
+        with open("logs/log.csv", "a+", encoding="utf-8") as file:
+            file.write(f"{now};{key};{model.__module__}.{model.predict_expenses.__name__};{result[key]}\n")
     return result
 
 

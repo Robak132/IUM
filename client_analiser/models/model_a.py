@@ -1,7 +1,6 @@
 import pandas as pd
 from pandas import DataFrame
 from sklearn.linear_model import LinearRegression
-
 from client_analiser.models import ModelInterface
 
 
@@ -47,11 +46,15 @@ class ModelA(ModelInterface):
             })
         return pd.DataFrame(data=user_future_expenses).set_index('user_id')
 
-    def predict_expenses(self, products: DataFrame, deliveries: DataFrame, sessions: DataFrame, user: DataFrame):
+    def predict_expenses(self,
+                         products: DataFrame,
+                         deliveries: DataFrame,
+                         sessions: DataFrame,
+                         users: DataFrame) -> dict[str, float]:
         if sessions.empty:
-            return 0
+            return {}
 
         sessions["timestamp"] = pd.to_datetime(sessions["timestamp"])
         sessions['timestamp_interval'] = sessions['timestamp'].apply(lambda x: x.month)
         predictions = self.predict_expenses_for_all_users(sessions, products)
-        return predictions.to_dict()["user_expenses"][user['user_id'].item()]
+        return predictions.to_dict()["user_expenses"]
