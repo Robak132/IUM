@@ -8,11 +8,14 @@ import os.path
 from fastapi import FastAPI, Request
 from pandas import DataFrame
 
-from client_analiser.models.model_a import predict as predict_a
-from client_analiser.models.model_b import predict as predict_b
+from client_analiser.models import ModelInterface, ModelA, ModelB
 from client_analiser.utils import PrettyJSONResponse
 
 app = FastAPI()
+
+# Models
+model_A: ModelInterface = ModelA()
+model_B: ModelInterface = ModelB()
 
 
 @app.on_event("startup")
@@ -95,14 +98,15 @@ async def reset_log():
 
 def predict_group(products: DataFrame, deliveries: DataFrame, sessions: DataFrame, users: DataFrame,
                   ab_ratio: float = 0.5):
+    dataset = (deliveries, products, sessions, users)
     now = time.strftime('%Y-%m-%dT%H:%M:%S')
     result_dict = {}
     for row, user in users.iterrows():
         if random.random() <= ab_ratio:
-            result = predict_one_user(user['user_id'], (deliveries, products, sessions, users), now, predict_a)
+            result = predict_one_user(user['user_id'], dataset, now, model_A.predict_expenses)
             result_dict[user["user_id"]] = result
         else:
-            result = predict_one_user(user['user_id'], (deliveries, products, sessions, users), now, predict_b)
+            result = predict_one_user(user['user_id'], dataset, now, model_B.predict_expenses)
             result_dict[user["user_id"]] = result
     return result_dict
 
