@@ -9,4 +9,4 @@ class ModelB(ModelInterface):
                          deliveries: DataFrame,
                          sessions: DataFrame,
                          users: DataFrame) -> dict[str, float]:
-        return {}
+        return {f"{user_id}": 0 for user_id in users["user_id"].to_list()}
