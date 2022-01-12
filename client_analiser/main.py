@@ -45,12 +45,16 @@ async def get_prediction_b(request: Request):
 
 @app.get("/predict", response_class=PrettyJSONResponse)
 async def make_report():
-    log_data = pd.read_csv("logs/log.csv", header=0, sep=";")
-    if log_data.empty:
+    try:
+        log_data = pd.read_csv("logs/log.csv", header=0, sep=";")
+        good_results = json.load(open("logs/good_results.json"))
+        if log_data.empty:
+            raise FileNotFoundError("Empty log")
+    except FileNotFoundError:
         return "AB test was not initiated"
 
-    log_data['good'] = log_data.apply(lambda row: ab_get_valid_result(row["user_id"]), axis=1)
-    log_data['error'] = (log_data['result'] - log_data['good'])**2
+    log_data['good'] = log_data.apply(lambda row: good_results[row["user_id"]], axis=1)
+    log_data['error'] = (log_data['result'] - log_data['good']) ** 2
     log_json = json.loads(log_data.to_json(orient='records'))
 
     log_data = log_data.drop(columns=["good", "result", "user_id"])
@@ -76,10 +80,20 @@ async def make_report():
     return {"model_results": model_results, "log": log_json}
 
 
-def ab_get_valid_result(unit_id):
-    with open("../data/ab_test/ab_test_good_data.json") as file:
-        json_object = json.load(file)
-        return json_object[str(unit_id)]
+@app.get("/predict/good_results", response_class=PrettyJSONResponse)
+async def get_good_results():
+    try:
+        json_object = json.load(open("logs/good_results.json"))
+        return json_object
+    except FileNotFoundError:
+        return "No data was found"
+
+
+@app.post("/predict/good_results")
+async def set_good_results(request: Request):
+    input_data = await request.json()
+    file = open("logs/good_results.json", "w+")
+    json.dump(input_data, file, indent=4)
 
 
 @app.post("/predict")
