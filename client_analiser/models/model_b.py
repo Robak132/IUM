@@ -49,6 +49,7 @@ class ModelB(ModelInterface):
 
     def __init__(self):
         self.net = NeuralNetworkRegressor()
+        # self.load_model("../models/model_b_v1")
 
     def predict_expenses(self,
                          products: DataFrame,
@@ -56,22 +57,27 @@ class ModelB(ModelInterface):
                          sessions: DataFrame,
                          users: DataFrame) -> dict[str, float]:
         extracted_users_data = self.extract_users_data(sessions, users, products)
-        print(extracted_users_data)
         x, cat_x = self.prepare_data_for_test(extracted_users_data)
         x = torch.from_numpy(x.values).float()
         cat_x = torch.from_numpy(cat_x.values).float()
         self.net.eval()
         out = self.net(x, cat_x).squeeze()
         out = out.detach().numpy()
-        print(out)
         return {f"{int(user_id)}": out[i] for i, user_id in enumerate(extracted_users_data["user_id"].to_list())}
 
-    def get_user_id_from_session(self, session):
+    @staticmethod
+    def get_user_id_from_session(session):
         sample_user_id = session['user_id'].iloc[0]
         for user_id in session['user_id']:
             if sample_user_id != user_id:
                 raise Exception("How it is even possible")
         return sample_user_id
+
+    def load_model(self, string):
+        self.net.load_state_dict(torch.load(string))
+
+    def save_model(self, string):
+        torch.save(self.net.state_dict(), string)
 
     def get_user_information(self, user_session_data):
         d = {
@@ -98,7 +104,8 @@ class ModelB(ModelInterface):
         enriched_users_data = pd.concat(extracted_users)
         return pd.merge(enriched_users_data, users_data, on="user_id").drop(columns=['name', 'street'])
 
-    def prepare_data_for_test(self, extracted_users_data):
+    @staticmethod
+    def prepare_data_for_test(extracted_users_data):
         categorical_columns = ['city']
         categorical_values = pd.get_dummies(extracted_users_data[categorical_columns])
         numeric_values = extracted_users_data.drop(columns=['user_id', *categorical_columns])
@@ -111,7 +118,8 @@ class ModelB(ModelInterface):
         numerical_values = numerical_values.drop(columns=['expenses_y'])
         return numerical_values, categorical_values, targets
 
-    def load_into_train_val(self, ratio, numerical_values, categorical_values, objectives):
+    @staticmethod
+    def load_into_train_val(ratio, numerical_values, categorical_values, objectives):
         train_indices = np.random.rand(len(numerical_values)) > ratio
         numerical_data = torch.from_numpy(numerical_values.values[train_indices]).float()
         categorical_data = torch.from_numpy(categorical_values.values[train_indices]).float()

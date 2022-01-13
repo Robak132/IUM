@@ -3,6 +3,15 @@ Client Analiser
 
 Regressive model to predict clients' probability to return to the online shop.
 
+#TODO
+* porządek ze strukturą projektu
+* lepsze readme
+* wczytywanie parametrów do modelu B
+
+#NICE TO HAVE
+* podział ruchu na grupy
+* modele jako mikroserwisy
+
 Project Organization
 ------------
 
