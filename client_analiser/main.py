@@ -24,11 +24,6 @@ async def startup_event():
         await reset_log()
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-
 @app.post("/predict/A")
 async def get_prediction_a(request: Request):
     input_data = await request.json()
@@ -45,12 +40,16 @@ async def get_prediction_b(request: Request):
 
 @app.get("/predict", response_class=PrettyJSONResponse)
 async def make_report():
-    log_data = pd.read_csv("logs/log.csv", header=0, sep=";")
-    if log_data.empty:
+    try:
+        log_data = pd.read_csv("logs/log.csv", header=0, sep=";")
+        good_results = json.load(open("logs/good_results.json"))
+        if log_data.empty:
+            raise FileNotFoundError("Empty log")
+    except FileNotFoundError:
         return "AB test was not initiated"
 
-    log_data['good'] = log_data.apply(lambda row: ab_get_valid_result(row["user_id"]), axis=1)
-    log_data['error'] = (log_data['result'] - log_data['good'])**2
+    log_data['good'] = log_data.apply(lambda row: good_results[str(row["user_id"])], axis=1)
+    log_data['error'] = (log_data['result'] - log_data['good']) ** 2
     log_json = json.loads(log_data.to_json(orient='records'))
 
     log_data = log_data.drop(columns=["good", "result", "user_id"])
@@ -65,7 +64,6 @@ async def make_report():
         timestamp_results = model_results.get(timestamp, [])
         timestamp_results.append(json_object)
         model_results[timestamp] = timestamp_results
-
     for model, data in total_grouped_data.iterrows():
         error = data["error"]
         json_object = {"model": model, "MSE": error}
@@ -76,10 +74,21 @@ async def make_report():
     return {"model_results": model_results, "log": log_json}
 
 
-def ab_get_valid_result(unit_id):
-    with open("../data/ab_test/ab_test_good_data.json") as file:
-        json_object = json.load(file)
-        return json_object[str(unit_id)]
+@app.get("/predict/good_results", response_class=PrettyJSONResponse)
+async def get_good_results():
+    try:
+        json_object = json.load(open("logs/good_results.json"))
+        return json_object
+    except FileNotFoundError:
+        return "No data was found"
+
+
+@app.post("/predict/good_results")
+async def set_good_results(request: Request):
+    input_data = await request.json()
+    file = open("logs/good_results.json", "w+")
+    json.dump(input_data, file, indent=4)
+    return {}
 
 
 @app.post("/predict")
@@ -116,11 +125,11 @@ def predict_group(products: DataFrame,
 
 def predict_using_model(products: DataFrame,
                         deliveries: DataFrame,
-                        sessions_a: DataFrame,
-                        users_a: DataFrame,
+                        sessions: DataFrame,
+                        users: DataFrame,
                         now: str,
                         model: ModelInterface()) -> dict[str, float]:
-    result = model.predict_expenses(products, deliveries, sessions_a, users_a)
+    result = model.predict_expenses(products, deliveries, sessions, users)
     for key in result.keys():
         with open("logs/log.csv", "a+", encoding="utf-8") as file:
             file.write(f"{now};{key};{model.__module__}.{model.predict_expenses.__name__};{result[key]}\n")

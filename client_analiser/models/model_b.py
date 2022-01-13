@@ -55,7 +55,7 @@ class ModelB(ModelInterface):
         extracted_users_data = self.extract_users_data(sessions, users, products, users)
         self.prepare_users_data(extracted_users_data)
         out = self.net(x, cat_x).squeeze()
-        return {}
+        return {f"{user_id}": 0 for user_id in users["user_id"].to_list()}
 
     def get_user_id_from_session(self, session):
         sample_user_id = session['user_id'].iloc[0]
@@ -162,8 +162,3 @@ class ModelB(ModelInterface):
 
         # print("Final Training Accuracy: {}".format(train_acc[-1]))
         # print("Final Validation Accuracy: {}".format(val_acc[-1]))
-
-
-
-
-
