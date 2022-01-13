@@ -63,7 +63,8 @@ class ModelB(ModelInterface):
         self.net.eval()
         out = self.net(x, cat_x).squeeze()
         out = out.detach().numpy()
-        return {f"{int(user_id)}": out[i] for i, user_id in enumerate(extracted_users_data["user_id"].to_list())}
+        _dict = {user_id: round(float(out[i]), 2) for i, user_id in enumerate(extracted_users_data["user_id"].to_list())}
+        return _dict
 
     @staticmethod
     def get_user_id_from_session(session):
@@ -88,7 +89,8 @@ class ModelB(ModelInterface):
             'sessions_number': [len(user_session_data['session_id'].unique())],
             'average_discount': [user_session_data['offered_discount'].mean()],
             'average_discount_on_bought': [
-                user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"]['offered_discount'].mean()]
+                user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"]['offered_discount'].mean()
+            ]
         }
         if pd.isna(d['average_discount_on_bought']):
             d['average_discount_on_bought'] = 0
