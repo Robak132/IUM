@@ -72,7 +72,8 @@ if __name__ == "__main__":
     observations = calculate_expenses(test_data, products_data, users_data)
     # %%
     # print(model_B.prepare_data(model_B.extract_users_data(sessions_data, users_data, products_data)))
-    model_B.train_and_extract(sessions_data, users_data, products_data, observations)
+    # model_B.train_and_extract(sessions_data, users_data, products_data, observations)
+    # model_B.save_model("../models/model_b_v1")
     print(model_B.predict_expenses(products_data, deliveries_data, train_data, users_data))
     # observations = calculate_expenses(test_data, products_data, users_data)
 
