@@ -16,7 +16,9 @@ torch.manual_seed(seed)
 np.random.seed(seed)
 random.seed(seed)
 
+
 class NeuralNetworkRegressor(nn.Module):
+
     def __init__(self):
         super().__init__()
         self.emb_layer = nn.Linear(7, 7)
@@ -30,6 +32,7 @@ class NeuralNetworkRegressor(nn.Module):
         self.act_2 = nn.LeakyReLU()
         self.d2 = nn.Dropout(0.5)
         self.layer3 = nn.Linear(40, 1)
+
     def forward(self, x, cat_x):
         cat_x_embedded = self.emb_layer(cat_x)
         cat_x_embedded = self.act_emb(cat_x_embedded)
@@ -52,10 +55,16 @@ class ModelB(ModelInterface):
                          deliveries: DataFrame,
                          sessions: DataFrame,
                          users: DataFrame) -> dict[str, float]:
-        extracted_users_data = self.extract_users_data(sessions, users, products, users)
-        self.prepare_users_data(extracted_users_data)
+        extracted_users_data = self.extract_users_data(sessions, users, products)
+        print(extracted_users_data)
+        x, cat_x = self.prepare_data_for_test(extracted_users_data)
+        x = torch.from_numpy(x.values).float()
+        cat_x = torch.from_numpy(cat_x.values).float()
+        self.net.eval()
         out = self.net(x, cat_x).squeeze()
-        return {f"{user_id}": 0 for user_id in users["user_id"].to_list()}
+        out = out.detach().numpy()
+        print(out)
+        return {f"{int(user_id)}": out[i] for i, user_id in enumerate(extracted_users_data["user_id"].to_list())}
 
     def get_user_id_from_session(self, session):
         sample_user_id = session['user_id'].iloc[0]
@@ -80,24 +89,27 @@ class ModelB(ModelInterface):
         df = pd.DataFrame(data=d)
         return df.set_index('user_id')
 
-    def extract_users_data(self, sessions_data, users_data, products_data, targets):
+    def extract_users_data(self, sessions_data, users_data, products_data):
         enriched_sessions_data = pd.merge(sessions_data, products_data, on="product_id").sort_values(by=['timestamp'])
         extracted_users = []
         for user_id in enriched_sessions_data['user_id'].unique():
             extracted_users.append(
                 self.get_user_information(enriched_sessions_data[enriched_sessions_data['user_id'] == user_id]))
         enriched_users_data = pd.concat(extracted_users)
-        enriched_users_data = pd.merge(enriched_users_data, users_data, on="user_id").drop(columns=['name', 'street'])
-        return pd.merge(enriched_users_data, targets, on="user_id")
+        return pd.merge(enriched_users_data, users_data, on="user_id").drop(columns=['name', 'street'])
 
-    def prepare_data(self, extracted_users_data):
+    def prepare_data_for_test(self, extracted_users_data):
         categorical_columns = ['city']
-        print(extracted_users_data)
-        targets = extracted_users_data['expenses_y']
         categorical_values = pd.get_dummies(extracted_users_data[categorical_columns])
-        numeric_values = extracted_users_data.drop(columns = ['user_id', 'expenses_y', *categorical_columns])
-        print(numeric_values, targets)
-        return numeric_values, categorical_values, targets
+        numeric_values = extracted_users_data.drop(columns=['user_id', *categorical_columns])
+        return numeric_values, categorical_values
+
+    def prepare_data_for_train(self, extracted_users_data, targets):
+        extracted_users_data = pd.merge(extracted_users_data, targets, on="user_id")
+        targets = extracted_users_data['expenses_y']
+        numerical_values, categorical_values = self.prepare_data_for_test(extracted_users_data)
+        numerical_values = numerical_values.drop(columns=['expenses_y'])
+        return numerical_values, categorical_values, targets
 
     def load_into_train_val(self, ratio, numerical_values, categorical_values, objectives):
         train_indices = np.random.rand(len(numerical_values)) > ratio
@@ -120,15 +132,15 @@ class ModelB(ModelInterface):
         return train_loader, val_loader
 
     def train_and_extract(self, sessions_data, users_data, products_data, targets):
-        self.train(self.extract_users_data(sessions_data, users_data, products_data, targets))
+        self.train(self.extract_users_data(sessions_data, users_data, products_data), targets)
 
-    def train(self, x):
+    def train(self, x, y):
         extracted_data = x
-        numeric_data, categorical_data, targets = self.prepare_data(extracted_data)
+        numeric_data, categorical_data, targets = self.prepare_data_for_train(extracted_data, y)
         train_loader, val_loader = self.load_into_train_val(0.3, numeric_data, categorical_data, targets)
 
         criterion = nn.MSELoss()
-        optimizer = optim.Adam(self.net.parameters(), lr=0.001, weight_decay=0.001)
+        optimizer = optim.Adam(self.net.parameters(), lr=0.0001, weight_decay=0.001)
 
         iters = []
         losses = []

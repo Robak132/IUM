@@ -1,14 +1,15 @@
-#%%
 import pandas as pd
 import matplotlib.pyplot as plt
 from client_analiser.models import ModelInterface, ModelA, ModelB
-#%%
+
+
 def get_user_id_from_session(session):
     sample_user_id = session['user_id'].iloc[0]
     for user_id in session['user_id']:
         if sample_user_id != user_id:
             raise Exception("How it is even possible")
     return sample_user_id
+
 
 def get_user_expenses(user_session_data):
     d = {
@@ -42,8 +43,8 @@ def loss(predictions, observations):
     unified_data['difference_square'] = unified_data['difference'].apply(lambda x: x ** 2)
     return unified_data
 
+
 if __name__ == "__main__":
-    # %%
     iteration_path = "iteration_3/"
     deliveries_path = "../data/" + iteration_path + "raw/deliveries.jsonl"
     products_path = "../data/" + iteration_path + "raw/products.jsonl"
@@ -72,6 +73,7 @@ if __name__ == "__main__":
     # %%
     # print(model_B.prepare_data(model_B.extract_users_data(sessions_data, users_data, products_data)))
     model_B.train_and_extract(sessions_data, users_data, products_data, observations)
+    print(model_B.predict_expenses(products_data, deliveries_data, train_data, users_data))
     # observations = calculate_expenses(test_data, products_data, users_data)
 
 
