@@ -1,5 +1,4 @@
 import json
-import random
 import time
 
 import pandas as pd
@@ -8,7 +7,9 @@ import os.path
 from fastapi import FastAPI, Request
 from pandas import DataFrame
 
-from microservice.models import ModelInterface, ModelA, ModelB
+from microservice.model import ModelInterface
+from microservice.model.model_a import ModelA
+from microservice.model.model_b import ModelB
 from microservice.utils import PrettyJSONResponse
 
 app = FastAPI()
@@ -16,7 +17,7 @@ app = FastAPI()
 # Models
 model_A: ModelInterface = ModelA()
 model_B: ModelInterface = ModelB()
-model_B.load_model("../models/model_b_v1")
+model_B.load_model("../models/parameters/simple_v1")
 
 
 @app.on_event("startup")

@@ -1,11 +1,11 @@
 import pandas as pd
 
 
-def load_default_data(iteration_path: str = "iteration_3/"):
-    deliveries_path = "../data/" + iteration_path + "raw/deliveries.jsonl"
-    products_path = "../data/" + iteration_path + "raw/products.jsonl"
-    sessions_path = "../data/" + iteration_path + "raw/sessions.jsonl"
-    users_path = "../data/" + iteration_path + "raw/users.jsonl"
+def load_default_data(prefix: str = "../data/", iteration_path: str = "iteration_3/"):
+    deliveries_path = prefix + iteration_path + "raw/deliveries.jsonl"
+    products_path = prefix + iteration_path + "raw/products.jsonl"
+    sessions_path = prefix + iteration_path + "raw/sessions.jsonl"
+    users_path = prefix + iteration_path + "raw/users.jsonl"
 
     deliveries_data = pd.read_json(deliveries_path, lines=True)
     products_data = pd.read_json(products_path, lines=True)

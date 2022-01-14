@@ -1,0 +1,1 @@
+from microservice.model.model_interface import ModelInterface

@@ -2,7 +2,7 @@ import unittest
 import pandas as pd
 
 from features.build_features import aggregate_users_data, calculate_expenses
-from microservice.models import ModelInterface, ModelB
+from microservice.model import ModelInterface, ModelB
 from models.neural_networks.utils import train
 
 
@@ -31,8 +31,8 @@ class ModelBTests(unittest.TestCase):
         observations = calculate_expenses(test_data, products_data, users_data)
 
         train(model_NN_v1.net, aggregate_users_data(sessions_data, users_data, products_data), observations)
-        model_NN_v1.save_model("../models/parameters/model_nn_v1")
-        model_NN_v2.load_model("../models/parameters/model_nn_v1")
+        model_NN_v1.save_model("../model/parameters/model_nn_v1")
+        model_NN_v2.load_model("../model/parameters/model_nn_v1")
 
         self.assertEqual(model_NN_v1.predict_expenses(products_data, deliveries_data, train_data, users_data), model_NN_v2.predict_expenses(products_data, deliveries_data, train_data, users_data))  # add assertion here
 

@@ -1,14 +1,15 @@
 from pandas import DataFrame
 import torch
 from features.build_features import aggregate_users_data
-from microservice.models import ModelInterface
-from models.neural_networks.NeuralNetworkRegressor import NeuralNetworkRegressor
+from microservice.model import ModelInterface
+from models import SimpleRegressor
+
 from models.neural_networks.utils import prepare_data_for_predict
 
 
 class ModelB(ModelInterface):
     def __init__(self):
-        self.net = NeuralNetworkRegressor()
+        self.net = SimpleRegressor()
 
     def predict_expenses(self,
                          products: DataFrame,
