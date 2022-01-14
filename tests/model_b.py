@@ -1,7 +1,9 @@
 import unittest
 import pandas as pd
 from microservice.models import ModelInterface, ModelA, ModelB
-from notebooks.test import calculate_expenses
+from models.train_utils_nn import train_and_extract
+from models.utils import calculate_expenses
+
 
 class ModelBTests(unittest.TestCase):
     def test_load_save(self):
@@ -27,7 +29,7 @@ class ModelBTests(unittest.TestCase):
 
         observations = calculate_expenses(test_data, products_data, users_data)
 
-        model_NN_v1.train_and_extract(sessions_data, users_data, products_data, observations)
+        train_and_extract(model_NN_v1.net, sessions_data, users_data, products_data, observations)
         model_NN_v1.save_model("../models/model_nn_v1")
 
         model_NN_v2.load_model("../models/model_nn_v1")

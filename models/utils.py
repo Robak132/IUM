@@ -1,6 +1,4 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-from microservice.models import ModelInterface, ModelA, ModelB
 
 
 def get_user_id_from_session(session):
@@ -44,131 +42,20 @@ def loss(predictions, observations):
     return unified_data
 
 
-if __name__ == "__main__":
-    iteration_path = "iteration_3/"
+def load_default_data(iteration_path: str = "iteration_3/"):
     deliveries_path = "../data/" + iteration_path + "raw/deliveries.jsonl"
     products_path = "../data/" + iteration_path + "raw/products.jsonl"
     sessions_path = "../data/" + iteration_path + "raw/sessions.jsonl"
     users_path = "../data/" + iteration_path + "raw/users.jsonl"
-    # %%
+
     deliveries_data = pd.read_json(deliveries_path, lines=True)
     products_data = pd.read_json(products_path, lines=True)
     sessions_data = pd.read_json(sessions_path, lines=True)
     users_data = pd.read_json(users_path, lines=True)
-    # %%
+
     sessions_data = sessions_data.sort_values(by=['timestamp'])
-    # sessions_data['timestamp_date'] = sessions_data['timestamp'].apply(lambda x: x.date())
-    sessions_data['timestamp_week'] = sessions_data['timestamp'].apply(lambda x: x.week)
     sessions_data['timestamp_month'] = sessions_data['timestamp'].apply(lambda x: x.month)
-    sessions_data['timestamp_quarter'] = sessions_data['timestamp'].apply(lambda x: x.quarter)
-    # %%
+
     train_data = sessions_data[sessions_data.timestamp_month < 12]
     test_data = sessions_data[sessions_data.timestamp_month >= 12]
-    # %%
-    # Models
-    model_A: ModelInterface = ModelA()
-    model_B: ModelInterface = ModelB()
-
-    observations = calculate_expenses(test_data, products_data, users_data)
-    # %%
-    # print(model_B.prepare_data(model_B.extract_users_data(sessions_data, users_data, products_data)))
-    # model_B.train_and_extract(sessions_data, users_data, products_data, observations)
-    # model_B.save_model("../models/model_b_v1")
-    print(model_B.predict_expenses(products_data, deliveries_data, train_data, users_data))
-    # observations = calculate_expenses(test_data, products_data, users_data)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    return train_data, test_data, products_data, users_data, deliveries_data

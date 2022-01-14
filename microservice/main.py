@@ -16,6 +16,7 @@ app = FastAPI()
 # Models
 model_A: ModelInterface = ModelA()
 model_B: ModelInterface = ModelB()
+model_B.load_model("../models/model_b_v1")
 
 
 @app.on_event("startup")

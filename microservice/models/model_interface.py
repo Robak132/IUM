@@ -8,3 +8,9 @@ class ModelInterface:
                          sessions: DataFrame,
                          users: DataFrame) -> dict[str, float]:
         raise Exception("This is a interface")
+
+    def load_model(self, string: str):
+        raise Exception("This is a interface")
+
+    def save_model(self, string: str):
+        raise Exception("This is a interface")
