@@ -101,7 +101,11 @@ async def get_prediction_ab(request: Request):
 
 @app.post("/predict/reset_log")
 async def reset_log():
-    os.remove("logs/log.csv")
+    try:
+        os.remove("logs/log.csv")
+    except OSError:
+        pass
+
     with open("logs/log.csv", "a+", encoding="utf-8") as file:
         file.write(f"timestamp;user_id;model;result\n")
 
