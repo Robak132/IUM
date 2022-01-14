@@ -17,7 +17,7 @@ app = FastAPI()
 # Models
 model_A: ModelInterface = ModelA()
 model_B: ModelInterface = ModelB()
-model_B.load_model("../models/parameters/simple_v1")
+model_B.load_model("models/parameters/simple_v1")
 
 
 @app.on_event("startup")
@@ -103,11 +103,11 @@ async def get_prediction_ab(request: Request):
 @app.post("/predict/reset_log")
 async def reset_log():
     try:
-        os.remove("logs/log.csv")
+        os.remove("microservice/logs/log.csv")
     except OSError:
         pass
 
-    with open("logs/log.csv", "a+", encoding="utf-8") as file:
+    with open("microservice/logs/log.csv", "a+", encoding="utf-8") as file:
         file.write(f"timestamp;user_id;model;result\n")
 
 
@@ -126,6 +126,7 @@ def predict_group(products: DataFrame,
 
     result = predict_using_model(products, deliveries, sessions_a, users_a, now, model_A)
     result.update(predict_using_model(products, deliveries, sessions_b, users_b, now, model_B))
+    print(result)
     return result
 
 
@@ -137,7 +138,7 @@ def predict_using_model(products: DataFrame,
                         model: ModelInterface()) -> dict[str, float]:
     result = model.predict_expenses(products, deliveries, sessions, users)
     for key in result.keys():
-        with open("logs/log.csv", "a+", encoding="utf-8") as file:
+        with open("microservice/logs/log.csv", "a+", encoding="utf-8") as file:
             file.write(f"{now};{key};{model.__module__}.{model.predict_expenses.__name__};{result[key]}\n")
     return result
 
@@ -145,6 +146,9 @@ def predict_using_model(products: DataFrame,
 def make_dataframes(input_data: dict):
     users = DataFrame.from_dict(input_data.get('users', {}))
     sessions = DataFrame.from_dict(input_data.get('sessions', {}))
+    if not sessions.empty:
+        if sessions['timestamp'].dtype == "int64":
+            sessions['timestamp'] = pd.to_datetime(sessions['timestamp'], unit="ms")
     products = DataFrame.from_dict(input_data.get('products', {}))
     deliveries = DataFrame.from_dict(input_data.get('deliveries', {}))
     return products, deliveries, sessions, users
