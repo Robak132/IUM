@@ -1,6 +1,6 @@
 import unittest
 import pandas as pd
-from client_analiser.models import ModelInterface, ModelA, ModelB
+from microservice.models import ModelInterface, ModelA, ModelB
 from notebooks.test import calculate_expenses
 
 class ModelBTests(unittest.TestCase):

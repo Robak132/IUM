@@ -8,8 +8,8 @@ import os.path
 from fastapi import FastAPI, Request
 from pandas import DataFrame
 
-from client_analiser.models import ModelInterface, ModelA, ModelB
-from client_analiser.utils import PrettyJSONResponse
+from microservice.models import ModelInterface, ModelA, ModelB
+from microservice.utils import PrettyJSONResponse
 
 app = FastAPI()
 

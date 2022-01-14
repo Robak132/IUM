@@ -1,7 +1,7 @@
 import pandas as pd
 from pandas import DataFrame
 from sklearn.linear_model import LinearRegression
-from client_analiser.models import ModelInterface
+from microservice.models import ModelInterface
 
 
 class ModelA(ModelInterface):

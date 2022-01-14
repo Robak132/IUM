@@ -8,7 +8,7 @@ import torch.optim as optim
 import numpy as np
 import random
 
-from client_analiser.models import ModelInterface
+from microservice.models import ModelInterface
 
 seed = 213769420
 torch.cuda.manual_seed_all(seed)
