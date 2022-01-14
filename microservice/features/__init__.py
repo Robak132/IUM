@@ -1,3 +1,0 @@
-from microservice.features.build_features import get_user_information, get_user_id_from_session, extract_users_data
-from microservice.features.build_features_nn import prepare_data_for_train, prepare_data_for_predict, load_into_train_val
-

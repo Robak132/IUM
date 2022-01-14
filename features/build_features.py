@@ -1,6 +1,23 @@
 import pandas as pd
-import matplotlib.pyplot as plt
-from microservice.models import ModelInterface, ModelA, ModelB
+
+
+def get_user_information(user_session_data):
+    d = {
+        'user_id': [get_user_id_from_session(user_session_data)],
+        'expenses': [user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"]['price'].sum()],
+        'products_bought': [len(user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"])],
+        'events_number': [len(user_session_data)],
+        'sessions_number': [len(user_session_data['session_id'].unique())],
+        'average_discount': [user_session_data['offered_discount'].mean()],
+        'average_discount_on_bought': [
+            user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"]['offered_discount'].mean()],
+        'age': [(user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"]['timestamp'].max() -
+                user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"]['timestamp'].min()).days]
+    }
+    if pd.isna(d['average_discount_on_bought']):
+        d['average_discount_on_bought'] = 0
+    df = pd.DataFrame(data=d)
+    return df.set_index('user_id')
 
 
 def get_user_id_from_session(session):
@@ -16,8 +33,17 @@ def get_user_expenses(user_session_data):
         'user_id': get_user_id_from_session(user_session_data),
         'expenses': user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"]['price'].sum()
     }
-    # df = pd.DataFrame(data=d)
     return d
+
+
+def aggregate_users_data(sessions_data, users_data, products_data):
+    enriched_sessions_data = pd.merge(sessions_data, products_data, on="product_id").sort_values(by=['timestamp'])
+    extracted_users = []
+    for user_id in enriched_sessions_data['user_id'].unique():
+        extracted_users.append(
+            get_user_information(enriched_sessions_data[enriched_sessions_data['user_id'] == user_id]))
+    enriched_users_data = pd.concat(extracted_users)
+    return pd.merge(enriched_users_data, users_data, on="user_id").drop(columns=['name', 'street'])
 
 
 def calculate_expenses(sessions_data, products_data, users_data):
@@ -32,32 +58,6 @@ def calculate_expenses(sessions_data, products_data, users_data):
             }
         )
     return pd.DataFrame(data=user_expenses)
-
-
-def loss(predictions, observations):
-    unified_data = pd.merge(predictions, observations, on="user_id").sort_values(by=['user_id'])
-    unified_data['difference'] = unified_data['user_expenses'] - unified_data['expenses']
-    unified_data['difference_square'] = unified_data['difference'].apply(lambda x: x ** 2)
-    return unified_data
-
-
-def load_default_data(iteration_path: str = "iteration_3/"):
-    deliveries_path = "../data/" + iteration_path + "raw/deliveries.jsonl"
-    products_path = "../data/" + iteration_path + "raw/products.jsonl"
-    sessions_path = "../data/" + iteration_path + "raw/sessions.jsonl"
-    users_path = "../data/" + iteration_path + "raw/users.jsonl"
-
-    deliveries_data = pd.read_json(deliveries_path, lines=True)
-    products_data = pd.read_json(products_path, lines=True)
-    sessions_data = pd.read_json(sessions_path, lines=True)
-    users_data = pd.read_json(users_path, lines=True)
-
-    sessions_data = sessions_data.sort_values(by=['timestamp'])
-    sessions_data['timestamp_month'] = sessions_data['timestamp'].apply(lambda x: x.month)
-
-    train_data = sessions_data[sessions_data.timestamp_month < 12]
-    test_data = sessions_data[sessions_data.timestamp_month >= 12]
-    return train_data, test_data, products_data, users_data, deliveries_data
 
 
 def calculate_expenses_with_interval(user_session_data, min_interval_value, max_interval_value):

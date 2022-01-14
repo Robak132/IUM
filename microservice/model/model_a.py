@@ -1,12 +1,12 @@
 import pandas as pd
 from pandas import DataFrame
 from sklearn.linear_model import LinearRegression
-from microservice.models import ModelInterface
-from models.utils import extract_time_series
+
+from features.build_features import extract_time_series
+from microservice.model import ModelInterface
 
 
 class ModelA(ModelInterface):
-
     @staticmethod
     def predict_expenses_for_user(time_series):
         model = LinearRegression()

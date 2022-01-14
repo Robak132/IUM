@@ -1,19 +1,18 @@
 import unittest
 import pandas as pd
 
-from microservice.features import extract_users_data
-from microservice.models import ModelInterface, ModelB
-from models.train_utils_nn import train
-from models.utils import calculate_expenses
+from features.build_features import aggregate_users_data, calculate_expenses
+from microservice.model import ModelInterface, ModelB
+from models.neural_networks.utils import train
 
 
 class ModelBTests(unittest.TestCase):
     def test_load_save(self):
         iteration_path = "iteration_3/"
-        deliveries_path = "../data/" + iteration_path + "raw/deliveries.jsonl"
-        products_path = "../data/" + iteration_path + "raw/products.jsonl"
-        sessions_path = "../data/" + iteration_path + "raw/sessions.jsonl"
-        users_path = "../data/" + iteration_path + "raw/users.jsonl"
+        deliveries_path = "data/" + iteration_path + "raw/deliveries.jsonl"
+        products_path = "data/" + iteration_path + "raw/products.jsonl"
+        sessions_path = "data/" + iteration_path + "raw/sessions.jsonl"
+        users_path = "data/" + iteration_path + "raw/users.jsonl"
         # %%
         deliveries_data = pd.read_json(deliveries_path, lines=True)
         products_data = pd.read_json(products_path, lines=True)
@@ -31,9 +30,9 @@ class ModelBTests(unittest.TestCase):
 
         observations = calculate_expenses(test_data, products_data, users_data)
 
-        train(model_NN_v1.net, extract_users_data(sessions_data, users_data, products_data), observations)
-        model_NN_v1.save_model("../models/model_nn_v1")
-        model_NN_v2.load_model("../models/model_nn_v1")
+        train(model_NN_v1.net, aggregate_users_data(sessions_data, users_data, products_data), observations)
+        model_NN_v1.save_model("model/parameters/model_nn_v1")
+        model_NN_v2.load_model("model/parameters/model_nn_v1")
 
         self.assertEqual(model_NN_v1.predict_expenses(products_data, deliveries_data, train_data, users_data), model_NN_v2.predict_expenses(products_data, deliveries_data, train_data, users_data))  # add assertion here
 

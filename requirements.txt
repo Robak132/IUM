@@ -9,3 +9,4 @@ scikit-learn~=1.0.2
 matplotlib~=3.5.1
 requests~=2.27.1
 starlette==0.17.1
+torch~=1.10.1+cu113
