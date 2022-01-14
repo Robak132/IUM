@@ -2,35 +2,10 @@ import pandas as pd
 from pandas import DataFrame
 from sklearn.linear_model import LinearRegression
 from microservice.models import ModelInterface
+from models.utils import extract_time_series
 
 
 class ModelA(ModelInterface):
-    @staticmethod
-    def calculate_expenses_with_interval(user_session_data, min_interval_value, max_interval_value):
-        expenses = []
-        for interval in range(min_interval_value, max_interval_value + 1):
-            d = {
-                "interval_number": interval,
-                "expenses": user_session_data[(user_session_data['timestamp_interval'] == interval) & (
-                            user_session_data['event_type'] == "BUY_PRODUCT")]['price'].sum()}
-            expenses.append(d)
-        df = pd.DataFrame(data=expenses)
-        return df
-
-    def extract_time_series(self, sessions_data, products_data):
-        enriched_sessions_data = pd.merge(sessions_data, products_data, on="product_id").sort_values(by=['timestamp'])
-        users_time_series = []
-        min_value = sessions_data['timestamp_interval'].min()
-        max_value = sessions_data['timestamp_interval'].max()
-        for user_id in enriched_sessions_data['user_id'].unique():
-            users_time_series.append(
-                {
-                    "user_id": user_id,
-                    "expenses": self.calculate_expenses_with_interval(
-                        enriched_sessions_data[enriched_sessions_data['user_id'] == user_id], min_value, max_value)
-                }
-            )
-        return users_time_series
 
     @staticmethod
     def predict_expenses_for_user(time_series):
@@ -39,7 +14,7 @@ class ModelA(ModelInterface):
         return round(max(model.predict((time_series['interval_number'].max() + 1).reshape(1, -1))[0, 0], 0), 2)
 
     def predict_expenses_for_all_users(self, sessions_data, products_data):
-        extracted_time_series = self.extract_time_series(sessions_data, products_data)
+        extracted_time_series = extract_time_series(sessions_data, products_data)
         user_future_expenses = []
         for record in extracted_time_series:
             user_future_expenses.append({
@@ -60,3 +35,9 @@ class ModelA(ModelInterface):
         sessions['timestamp_interval'] = sessions['timestamp'].apply(lambda x: x.month)
         predictions = self.predict_expenses_for_all_users(sessions, products)
         return predictions.to_dict()["user_expenses"]
+
+    def load_model(self, string: str):
+        raise Exception("This model is not trainable")
+
+    def save_model(self, string: str):
+        raise Exception("This model is not trainable")

@@ -10,7 +10,9 @@ def get_user_information(user_session_data):
         'sessions_number': [len(user_session_data['session_id'].unique())],
         'average_discount': [user_session_data['offered_discount'].mean()],
         'average_discount_on_bought': [
-            user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"]['offered_discount'].mean()]
+            user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"]['offered_discount'].mean()],
+        # 'age': [user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"]['timestamp'].max() -
+        #         user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"]['timestamp'].min()]
     }
     if pd.isna(d['average_discount_on_bought']):
         d['average_discount_on_bought'] = 0

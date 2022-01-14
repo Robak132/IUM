@@ -58,7 +58,7 @@ class SimpleNN(nn.Module):
 class ModelB(ModelInterface):
 
     def __init__(self):
-        self.net = SimpleNN()
+        self.net = NeuralNetworkRegressor()
 
     def predict_expenses(self,
                          products: DataFrame,

@@ -22,7 +22,6 @@ def calculate_expenses(sessions_data, products_data, users_data):
     enriched_sessions_data = pd.merge(sessions_data, products_data, on="product_id").sort_values(by=['timestamp'])
     user_expenses = []
     for user_id in range(users_data['user_id'].min(), users_data['user_id'].max() + 1):
-        # for user_id in enriched_sessions_data['user_id'].unique():
         user_session_data = enriched_sessions_data[enriched_sessions_data['user_id'] == user_id]
         user_expenses.append(
             {
@@ -30,8 +29,6 @@ def calculate_expenses(sessions_data, products_data, users_data):
                 'expenses': user_session_data[user_session_data['event_type'] == "BUY_PRODUCT"]['price'].sum()
             }
         )
-        # user_expenses.append(get_user_expenses(enriched_sessions_data[enriched_sessions_data['user_id'] == user_id]))
-
     return pd.DataFrame(data=user_expenses)
 
 
@@ -59,3 +56,31 @@ def load_default_data(iteration_path: str = "iteration_3/"):
     train_data = sessions_data[sessions_data.timestamp_month < 12]
     test_data = sessions_data[sessions_data.timestamp_month >= 12]
     return train_data, test_data, products_data, users_data, deliveries_data
+
+
+def calculate_expenses_with_interval(user_session_data, min_interval_value, max_interval_value):
+    expenses = []
+    for interval in range(min_interval_value, max_interval_value + 1):
+        d = {
+            "interval_number": interval,
+            "expenses": user_session_data[(user_session_data['timestamp_interval'] == interval) & (
+                        user_session_data['event_type'] == "BUY_PRODUCT")]['price'].sum()}
+        expenses.append(d)
+    df = pd.DataFrame(data=expenses)
+    return df
+
+
+def extract_time_series(sessions_data, products_data):
+    enriched_sessions_data = pd.merge(sessions_data, products_data, on="product_id").sort_values(by=['timestamp'])
+    users_time_series = []
+    min_value = sessions_data['timestamp_interval'].min()
+    max_value = sessions_data['timestamp_interval'].max()
+    for user_id in enriched_sessions_data['user_id'].unique():
+        users_time_series.append(
+            {
+                "user_id": user_id,
+                "expenses": calculate_expenses_with_interval(
+                    enriched_sessions_data[enriched_sessions_data['user_id'] == user_id], min_value, max_value)
+            }
+        )
+    return users_time_series
