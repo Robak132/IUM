@@ -1,3 +1,5 @@
+import math
+
 from pandas import DataFrame
 import torch
 from features.build_features import aggregate_users_data
@@ -23,7 +25,12 @@ class ModelB(ModelInterface):
         self.net.eval()
         out = self.net(x, cat_x).squeeze()
         out = out.detach().numpy()
-        _dict = {user_id: round(float(out[i]), 2) for i, user_id in enumerate(extracted_users_data["user_id"].to_list())}
+        _dict = {}
+        for i, user_id in enumerate(extracted_users_data["user_id"].to_list()):
+            if math.isnan(out[i]):
+                _dict[user_id] = 0
+            else:
+                _dict[user_id] = round(max(float(out[i]), 0), 2)
         return _dict
 
     def load_model(self, string):
