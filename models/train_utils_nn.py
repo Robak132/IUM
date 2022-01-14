@@ -1,14 +1,8 @@
-import random
-import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
 
-from microservice.features import extract_users_data, prepare_data_for_predict, prepare_data_for_train, load_into_train_val
-
-
-def train_and_extract(model, sessions_data, users_data, products_data, targets):
-    train(model, extract_users_data(sessions_data, users_data, products_data), targets)
+from microservice.features import prepare_data_for_train, load_into_train_val
 
 
 def train(model, x, y):

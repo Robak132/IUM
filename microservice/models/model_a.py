@@ -7,11 +7,12 @@ from microservice.models import ModelInterface
 class ModelA(ModelInterface):
     @staticmethod
     def calculate_expenses_with_interval(user_session_data, min_interval_value, max_interval_value):
-        expenses=[]
-        for interval in range (min_interval_value, max_interval_value + 1):
+        expenses = []
+        for interval in range(min_interval_value, max_interval_value + 1):
             d = {
                 "interval_number": interval,
-                "expenses": user_session_data[(user_session_data['timestamp_interval'] == interval) & (user_session_data['event_type'] == "BUY_PRODUCT")]['price'].sum()}
+                "expenses": user_session_data[(user_session_data['timestamp_interval'] == interval) & (
+                            user_session_data['event_type'] == "BUY_PRODUCT")]['price'].sum()}
             expenses.append(d)
         df = pd.DataFrame(data=expenses)
         return df
@@ -25,7 +26,8 @@ class ModelA(ModelInterface):
             users_time_series.append(
                 {
                     "user_id": user_id,
-                    "expenses": self.calculate_expenses_with_interval(enriched_sessions_data[enriched_sessions_data['user_id'] == user_id], min_value, max_value)
+                    "expenses": self.calculate_expenses_with_interval(
+                        enriched_sessions_data[enriched_sessions_data['user_id'] == user_id], min_value, max_value)
                 }
             )
         return users_time_series

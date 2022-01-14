@@ -1,7 +1,9 @@
 import unittest
 import pandas as pd
-from microservice.models import ModelInterface, ModelA, ModelB
-from models.train_utils_nn import train_and_extract
+
+from microservice.features import extract_users_data
+from microservice.models import ModelInterface, ModelB
+from models.train_utils_nn import train
 from models.utils import calculate_expenses
 
 
@@ -29,9 +31,8 @@ class ModelBTests(unittest.TestCase):
 
         observations = calculate_expenses(test_data, products_data, users_data)
 
-        train_and_extract(model_NN_v1.net, sessions_data, users_data, products_data, observations)
+        train(model_NN_v1.net, extract_users_data(sessions_data, users_data, products_data), observations)
         model_NN_v1.save_model("../models/model_nn_v1")
-
         model_NN_v2.load_model("../models/model_nn_v1")
 
         self.assertEqual(model_NN_v1.predict_expenses(products_data, deliveries_data, train_data, users_data), model_NN_v2.predict_expenses(products_data, deliveries_data, train_data, users_data))  # add assertion here
