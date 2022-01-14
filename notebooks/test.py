@@ -1,6 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-from client_analiser.models import ModelInterface, ModelA, ModelB
+from microservice.models import ModelInterface, ModelA, ModelB
 
 
 def get_user_id_from_session(session):

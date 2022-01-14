@@ -8,7 +8,7 @@ import torch.optim as optim
 import numpy as np
 import random
 
-from client_analiser.models import ModelInterface
+from microservice.models import ModelInterface
 
 seed = 213769420
 torch.cuda.manual_seed_all(seed)
@@ -18,7 +18,6 @@ random.seed(seed)
 
 
 class NeuralNetworkRegressor(nn.Module):
-
     def __init__(self):
         super().__init__()
         self.emb_layer = nn.Linear(7, 7)
@@ -46,7 +45,6 @@ class NeuralNetworkRegressor(nn.Module):
 
 
 class ModelB(ModelInterface):
-
     def __init__(self):
         self.net = NeuralNetworkRegressor()
         # self.load_model("../models/model_b_v1")
@@ -134,10 +132,8 @@ class ModelB(ModelInterface):
         train_dataset = data.TensorDataset(numerical_data, categorical_data, targets)
         val_dataset = data.TensorDataset(val_numerical_data, val_categorical_data, val_targets)
 
-        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True,
-                                                   worker_init_fn=lambda _: np.random.seed(seed))
-        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=64, shuffle=False,
-                                                 worker_init_fn=lambda _: np.random.seed(seed))
+        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
+        val_loader = torch.utils.data.DataLoader(val_dataset, batch_size=len(val_dataset), shuffle=False)
 
         return train_loader, val_loader
 
@@ -180,7 +176,8 @@ class ModelB(ModelInterface):
             # train_acc.append(get_accuracy(model, train_loader, threshold))  # compute training accuracy
             # val_acc.append(vtest_acc)  # compute validation accuracy
             # val_roc.append(roc_value)
-
-
         # print("Final Training Accuracy: {}".format(train_acc[-1]))
         # print("Final Validation Accuracy: {}".format(val_acc[-1]))
+
+    if __name__ == "__main__":
+        pass

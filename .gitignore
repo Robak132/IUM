@@ -87,4 +87,4 @@ target/
 .mypy_cache/
 
 # Logs
-/client_analiser/logs
+/microservice/logs
