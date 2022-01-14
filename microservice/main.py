@@ -43,8 +43,8 @@ async def get_prediction_b(request: Request):
 @app.get("/predict", response_class=PrettyJSONResponse)
 async def make_report():
     try:
-        log_data = pd.read_csv("logs/log.csv", header=0, sep=";")
-        good_results = json.load(open("logs/good_results.json"))
+        log_data = pd.read_csv("microservice/logs/log.csv", header=0, sep=";")
+        good_results = json.load(open("microservice/logs/good_results.json"))
         if log_data.empty:
             raise FileNotFoundError("Empty log")
     except FileNotFoundError:
